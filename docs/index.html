@@ -1711,15 +1711,20 @@ const Flight = (() => {
     scene.fog = new THREE.Fog(0x1a2740, 40, isSmall ? 520 : 680);
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 3000);
 
-    const c = document.createElement("canvas"); c.width = c.height = 128;
-    const g = c.getContext("2d");
-    for (let i = 0; i < 16; i++) {
-      const cx = 64 + (Math.random() - .5) * 40, cy = 66 + (Math.random() - .5) * 22, r = 16 + Math.random() * 26;
-      const gr = g.createRadialGradient(cx, cy, 0, cx, cy, r);
-      gr.addColorStop(0, "rgba(255,255,255,.5)"); gr.addColorStop(1, "rgba(255,255,255,0)");
-      g.fillStyle = gr; g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fill();
+    // Cloud texture computed pixel by pixel: white RGB with soft alpha.
+    // (A 2D-canvas texture shows coloured speckles on iOS Safari, which loses precision in near-transparent pixels.)
+    const TS = 128, data = new Uint8Array(TS * TS * 4), blobs = [];
+    for (let i = 0; i < 16; i++) blobs.push([64 + (Math.random() - .5) * 40, 66 + (Math.random() - .5) * 22, 16 + Math.random() * 26]);
+    for (let py = 0; py < TS; py++) for (let px = 0; px < TS; px++) {
+      let keep = 1;
+      for (const [bx, by, br] of blobs) { const d = Math.hypot(px + .5 - bx, py + .5 - by) / br; if (d < 1) keep *= 1 - .5 * (1 - d); }
+      const o = (py * TS + px) * 4;
+      data[o] = data[o + 1] = data[o + 2] = 255;
+      data[o + 3] = Math.round((1 - keep) * 255);
     }
-    const tex = new THREE.CanvasTexture(c);
+    const tex = new THREE.DataTexture(data, TS, TS, THREE.RGBAFormat);
+    tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.generateMipmaps = true;
+    tex.needsUpdate = true;
 
     const N = isSmall ? 260 : 480, items = [];
     for (let i = 0; i < N; i++) {
