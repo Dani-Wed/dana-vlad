@@ -81,8 +81,12 @@ function checkin_(b) {
   } else {
     const n = normalize_(b.name);
     if (n.split(" ").length < 2) return { ok: false, error: "invalid" };
-    const rev = n.split(" ").reverse().join(" ");
-    inv = invs.find(i => i.names.indexOf(n) > -1 || i.names.indexOf(rev) > -1);
+    // exact (any word order) first; then allow one typo per long name — only if a single household fits
+    for (const exact of [true, false]) {
+      const hits = invs.filter(i => i.names.some(nm => nm.split(" ").length >= 2 && matches_(n, nm, exact)));
+      if (hits.length === 1) { inv = hits[0]; break; }
+      if (hits.length > 1) { countFailure_(); return { ok: false, error: "ambiguous" }; }
+    }
   }
   if (!inv) { countFailure_(); return { ok: false, error: "not_found" }; }
   return { ok: true, invitation: public_(inv), rsvp: findRsvp_(inv.code) };
@@ -140,9 +144,39 @@ function findRsvp_(code) {
   const v = sh.getRange(r, 1, 1, 7).getValues()[0];
   return { attending: v[3] === "Yes", guests: Number(v[4]) || 0, dietary: unsafe_(v[5]), message: unsafe_(v[6]) };
 }
+// Must match normalize() in the website: strips accents, transliterates Cyrillic,
+// folds spelling variants (k/ch/q → c, y → i, double letters).
+const CYR_ = { а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"io",ж:"j",з:"z",и:"i",й:"i",к:"c",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"h",ц:"t",ч:"c",ш:"s",щ:"sc",ъ:"",ы:"i",ь:"",э:"e",ю:"iu",я:"ia",і:"i",ї:"i",є:"e",ґ:"g" };
 function normalize_(s) {
-  return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-    .replace(/[^a-z\s'-]/g, " ").replace(/[\s'-]+/g, " ").trim();
+  let x = String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  x = x.replace(/[а-яёіїєґ]/g, c => (c in CYR_ ? CYR_[c] : ""));
+  x = x.replace(/[^a-z\s'-]/g, " ").replace(/[\s'-]+/g, " ").trim();
+  return x.split(" ").map(w => w.replace(/ph/g, "f").replace(/ch/g, "c").replace(/sh/g, "s").replace(/zh/g, "j").replace(/kh/g, "h")
+    .replace(/gh/g, "g").replace(/[kq]/g, "c").replace(/w/g, "v").replace(/y/g, "i").replace(/x/g, "cs")
+    .replace(/([cg])i(?=[aou])/g, "$1").replace(/(.)\1+/g, "$1")).join(" ");
+}
+// Edit distance, capped: names of 5+ letters may differ by one letter (a typo).
+function close_(a, b) {
+  if (a === b) return true;
+  if (a.length < 5 || b.length < 5 || Math.abs(a.length - b.length) > 1) return false;
+  const prev = []; for (let j = 0; j <= b.length; j++) prev[j] = j;
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0]; prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const tmp = prev[j];
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diag = tmp;
+    }
+  }
+  return prev[b.length] <= 1;
+}
+// Every word of a stored name must be found in what the guest typed (any order).
+function matches_(query, stored, exact) {
+  const q = query.split(" "), used = [];
+  return stored.split(" ").every(w => {
+    const k = q.findIndex((x, i) => used.indexOf(i) < 0 && (exact ? x === w : close_(x, w)));
+    if (k < 0) return false; used.push(k); return true;
+  });
 }
 function cleanCode_(c) { return String(c || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 16); }
 function newCode_() {

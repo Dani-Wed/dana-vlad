@@ -4,7 +4,10 @@ Static site on GitHub Pages + a Google Sheet (Apps Script) for the guest list an
 
 ```
 docs/index.html        ← the website GitHub Pages serves (built, do not edit by hand)
-src/template.html      ← source: design, copy, CONFIG block, logic
+src/head.html          ← styles and design tokens
+src/body.html          ← page markup (texts come from translation keys)
+src/i18n.js            ← translations: Română (default), Русский, English
+src/app.js             ← CONFIG block (wedding content) + all logic and the 3D flight
 apps-script/Code.gs    ← backend, pasted into the Google Sheet
 build.mjs              ← node build.mjs [apps-script-url] → docs/index.html
 data/                  ← fictional sample invitations, used only without a backend
@@ -52,7 +55,14 @@ Column G gets one link per household (`…/?invite=CODE`). A guest who opens the
 link is checked in directly; everyone else can still check in with their name.
 
 ## Content changes
-Edit `CONFIG` at the top of the script in `src/template.html`, run the build again, upload `docs/index.html`.
+Wedding details: `CONFIG` at the top of `src/app.js`. Texts: `src/i18n.js` (same key in all three languages).
+Run `node build.mjs <apps-script-url>` again and push `docs/index.html`.
+
+## Languages
+Romanian by default; guests switch with the selector (remembered on their device).
+Direct links: `?lang=ru`, `?lang=en`, combinable with `?invite=CODE&lang=ru`.
+Names typed in Cyrillic are matched to Latin names in the Sheet (and the reverse),
+and one-letter typos in longer names are tolerated when only one household fits.
 
 ## Notes
 - Anyone who types a guest's exact full name can see that household's pass and RSVP

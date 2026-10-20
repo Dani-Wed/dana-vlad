@@ -1,0 +1,308 @@
+<div class="atmos" aria-hidden="true">
+  <div class="glow glow--a"></div>
+  <div class="glow glow--b"></div>
+  <svg class="paths" viewBox="0 0 100 100" preserveAspectRatio="none">
+    <path pathLength="1" d="M-5 78 C 25 40, 60 22, 108 30"/>
+    <path pathLength="1" d="M-5 92 C 30 70, 70 55, 108 62"/>
+    <path pathLength="1" d="M-5 64 C 35 48, 72 44, 108 12"/>
+  </svg>
+  <div class="veil"></div>
+</div>
+
+<div class="app">
+  <header class="topbar">
+    <span class="wordmark">D&amp;V<b>Air</b></span>
+    <div class="topbar-right">
+      <span class="topbar-flight">DV-0409 · 04.09.27</span>
+      <label class="lang"><span class="sr" data-i18n="lang.label">Limba</span><select class="lang-select" data-lang-select><option value="ro">Română</option><option value="ru">Русский</option><option value="en">English</option></select></label>
+    </div>
+  </header>
+
+  <main>
+  <!-- ============ 1 · THE ARRIVAL ============ -->
+  <section class="screen" id="arrival" aria-labelledby="arrival-h">
+    <div class="wrap arrival">
+      <p class="eyebrow rise" style="--i:0"><span class="rule"></span><span data-i18n="arrival.eyebrow"></span></p>
+      <h1 class="hero" id="arrival-h" aria-label="After Takeoff"><span class="hero-line" data-split>After</span><span class="hero-line hero-line--in" data-split>Takeoff</span></h1>
+      <p class="lede rise" style="--i:7" data-i18n-html="arrival.lede"></p>
+      <div class="actions rise" style="--i:8">
+        <button class="btn" type="button" data-go="checkin"><span data-i18n="arrival.cta"></span> <span class="arrow" aria-hidden="true"></span></button>
+      </div>
+      <div class="arrival-foot fine rise" style="--i:10">
+        <span><span data-i18n="arrival.flight"></span> <b>DV-0409</b></span>
+        <span><span data-i18n="arrival.departure"></span> <b>Madison Park</b></span>
+        <span><span data-i18n="arrival.destination"></span> <b data-i18n="dest.value"></b></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 2 · PASSENGER CHECK-IN ============ -->
+  <section class="screen" id="checkin" aria-labelledby="checkin-h" hidden>
+    <div class="wrap narrow">
+      <p class="eyebrow rise" style="--i:0"><span class="rule"></span><span data-i18n="checkin.eyebrow"></span></p>
+      <h2 class="title rise" style="--i:1" id="checkin-h" tabindex="-1" data-focus data-i18n="checkin.title"></h2>
+      <p class="sub rise" style="--i:2" data-i18n="checkin.sub"></p>
+      <form id="checkin-form" class="rise" style="--i:3" novalidate>
+        <div class="field">
+          <label for="guest-name" data-i18n="checkin.label"></label>
+          <input class="name-input" id="guest-name" name="guest-name" type="text" autocomplete="name" autocapitalize="words" spellcheck="false" enterkeyhint="go" data-i18n-ph="checkin.placeholder" aria-describedby="name-msg privacy-note" maxlength="80">
+          <span class="underline" aria-hidden="true"></span>
+        </div>
+        <p class="msg" id="name-msg" aria-live="polite"></p>
+        <div class="actions">
+          <button class="btn btn--solid" id="checkin-btn" type="submit"><span data-i18n="checkin.cta"></span> <span class="arrow" aria-hidden="true"></span></button>
+        </div>
+        <div class="processing" id="processing" hidden>
+          <div class="track" aria-hidden="true"><span></span></div>
+          <p class="status" id="status" role="status"></p>
+        </div>
+        <p class="fine privacy" id="privacy-note" data-i18n="checkin.privacy"></p>
+      </form>
+      <aside class="proto rise" style="--i:4">
+        <span class="chip" data-i18n="proto.chip"></span>
+        <span class="fine" data-i18n="proto.try"></span>
+        <button class="linkish" type="button" data-sample="Elena Popescu">Elena Popescu</button>
+        <button class="linkish" type="button" data-sample="Ceban Ion">Ceban Ion</button>
+        <button class="linkish" type="button" data-sample="Мария Русу">Мария Русу</button>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============ 3 · BOARDING PASS ============ -->
+  <section class="screen" id="boarding" aria-labelledby="boarding-h" hidden>
+    <div class="wrap">
+      <div class="board-head">
+        <p class="eyebrow rise" style="--i:0"><span class="rule"></span><span data-i18n="board.eyebrow"></span></p>
+        <h2 class="title rise" style="--i:1" id="boarding-h" tabindex="-1" data-focus data-i18n-html="board.title"></h2>
+      </div>
+
+      <article class="pass" id="pass" data-i18n-aria="pass.kind">
+        <div class="pass-main">
+          <header class="pass-head pi" style="--i:0">
+            <span class="pass-brand">D&amp;V<b>Air</b></span>
+            <span class="pass-kind"><span data-i18n="pass.kind"></span> · <span data-i18n="pass.cabin"></span></span>
+          </header>
+          <div class="pass-passenger pi" style="--i:1">
+            <span class="lbl" data-i18n="pass.passenger"></span>
+            <span class="pass-name" data-bind="displayName"></span>
+            <span class="pass-party" data-bind="partyLabel"></span>
+          </div>
+          <div class="route pi" style="--i:2">
+            <div class="leg leg--dep"><span class="lbl" data-i18n="pass.departure"></span><span class="place">Madison Park</span></div>
+            <svg class="route-arc" viewBox="0 0 200 46" preserveAspectRatio="none" aria-hidden="true">
+              <path d="M4 40 Q 100 -14 196 40"/>
+              <circle cx="4" cy="40" r="2.5"/>
+              <circle cx="196" cy="40" r="2.5"/>
+              <circle class="dest-dot" cx="196" cy="40" r="4"/>
+            </svg>
+            <div class="leg leg--dest"><span class="lbl" data-i18n="pass.destination"></span><span class="place classified" data-i18n="dest.value"></span><small data-i18n="pass.revealed"></small></div>
+          </div>
+          <dl class="pass-grid pi" style="--i:3" id="pass-grid"></dl>
+        </div>
+        <aside class="pass-stub">
+          <span class="notch notch--t" aria-hidden="true"></span>
+          <span class="notch notch--b" aria-hidden="true"></span>
+          <div class="stub-top pi" style="--i:2">
+            <span class="lbl" data-i18n="pass.flight"></span>
+            <span class="stub-flight">DV-0409</span>
+          </div>
+          <div class="pi" style="--i:3"><span class="lbl" data-i18n="pass.passenger"></span><span class="stub-name" data-bind="shortName"></span></div>
+          <dl class="stub-meta pi" style="--i:4">
+            <div><dt class="lbl" data-i18n="pass.date"></dt><dd data-bind="dateShort"></dd></div>
+            <div><dt class="lbl" data-i18n="pass.party"></dt><dd data-bind="partyShort"></dd></div>
+          </dl>
+          <div class="barcode pi" style="--i:5">
+            <svg id="barcode" viewBox="0 0 200 52" preserveAspectRatio="none" aria-hidden="true"></svg>
+            <span class="fine" data-bind="ref"></span>
+          </div>
+        </aside>
+      </article>
+      <p class="fine pass-foot" data-i18n="pass.foot"></p>
+
+      <div class="actions">
+        <button class="btn btn--solid" type="button" data-go="details"><span data-i18n="board.explore"></span> <span class="arrow" aria-hidden="true"></span></button>
+        <button class="btn" type="button" id="save-btn" data-i18n="board.save"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · THE FLIGHT — scroll-driven journey ============ -->
+  <section class="screen screen--flight" id="details" aria-labelledby="details-h" hidden>
+    <div class="sky-ground" aria-hidden="true"></div>
+    <canvas class="sky" id="sky" aria-hidden="true"></canvas>
+
+    <div class="hud-top">
+      <button class="btn btn--text" type="button" data-go="boarding"><span class="arrow arrow--back" aria-hidden="true"></span> <span data-i18n="nav.boarding"></span></button>
+      <div class="hud-top-right">
+        <span class="hud-leg" aria-hidden="true">DV-0409 · <span id="hud-leg"></span></span>
+        <label class="lang"><span class="sr" data-i18n="lang.label">Limba</span><select class="lang-select" data-lang-select><option value="ro">Română</option><option value="ru">Русский</option><option value="en">English</option></select></label>
+        <button class="sound-btn" type="button" id="sound-btn" aria-pressed="false"><span class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="sound-lbl" data-i18n="hud.sound"></span></button>
+      </div>
+    </div>
+    <div class="hud" aria-hidden="true">
+      <div class="hud-cell"><span class="lbl" data-i18n="hud.alt"></span><span class="hud-val"><span id="hud-alt">0</span><small>ft</small></span></div>
+      <div class="hud-cell hud-cell--spd"><span class="lbl" data-i18n="hud.spd"></span><span class="hud-val"><span id="hud-spd">0</span><small>kt</small></span></div>
+      <div class="hud-route">
+        <span class="lbl">Madison Park</span>
+        <span class="hud-line"><i id="hud-dot"></i></span>
+        <span class="lbl hud-classified" data-i18n="dest.value"></span>
+      </div>
+      <div class="hud-cell hud-cell--eta"><span class="lbl" data-i18n="hud.eta"></span><span class="hud-val"><span id="hud-eta">—</span><small data-i18n="hud.days"></small></span></div>
+    </div>
+
+    <div class="flight" id="flight">
+      <article class="chapter chapter--intro" data-leg="leg.gate">
+        <div class="chap-in">
+          <p class="eyebrow"><span class="rule"></span><span data-i18n="ch0.eyebrow"></span></p>
+          <h2 class="chap-h chap-h--xl" id="details-h" tabindex="-1" data-focus data-i18n-html="ch0.title"></h2>
+          <p class="chap-p" data-i18n="ch0.p"></p>
+          <span class="scroll-cue" aria-hidden="true"><i></i></span>
+        </div>
+      </article>
+
+      <article class="chapter" data-leg="leg.takeoff">
+        <div class="chap-in">
+          <p class="eyebrow"><span class="rule"></span><span data-i18n="ch1.eyebrow"></span></p>
+          <h2 class="chap-h" data-i18n-html="ch1.title"></h2>
+          <p class="chap-p chap-p--lead" id="ch1-lead"></p>
+          <p class="chap-p" data-i18n="ch1.p"></p>
+        </div>
+      </article>
+
+      <article class="chapter chapter--right" data-leg="leg.climb" data-draw>
+        <div class="chap-in">
+          <p class="eyebrow"><span class="rule"></span><span data-i18n="ch2.eyebrow"></span></p>
+          <h2 class="chap-h" data-i18n-html="ch2.title"></h2>
+          <svg class="routes" viewBox="0 0 420 220" aria-hidden="true">
+            <path class="r r-a" pathLength="1" d="M18 40 C 140 30, 220 70, 320 118"/>
+            <path class="r r-b" pathLength="1" d="M18 190 C 140 200, 230 160, 320 118"/>
+            <path class="r r-ab" pathLength="1" d="M320 118 L 404 118"/>
+            <circle class="o" cx="18" cy="40" r="3.5"/><circle class="o" cx="18" cy="190" r="3.5"/>
+            <circle class="meet" cx="320" cy="118" r="5"/>
+            <text class="t" x="30" y="28" data-bind="partnerA"></text>
+            <text class="t" x="30" y="214" data-bind="partnerB"></text>
+          </svg>
+          <p class="chap-p" data-i18n="ch2.p"></p>
+        </div>
+      </article>
+
+      <article class="chapter" data-leg="leg.cruise">
+        <div class="chap-in chap-in--wide">
+          <p class="eyebrow"><span class="rule"></span><span data-i18n="ch3.eyebrow"></span></p>
+          <h2 class="chap-h" data-i18n-html="ch3.title"></h2>
+          <div class="crew" id="crew"></div>
+        </div>
+      </article>
+
+      <article class="chapter chapter--right" data-leg="leg.cruise">
+        <div class="chap-in">
+          <p class="eyebrow"><span class="rule"></span><span data-i18n="ch4.eyebrow"></span></p>
+          <h2 class="chap-h" data-i18n-html="ch4.title"></h2>
+          <ul class="redacted">
+            <li><span class="lbl" data-i18n="ch4.coords"></span><span class="bar" style="--w:78%"></span></li>
+            <li><span class="lbl" data-i18n="ch4.time"></span><span class="bar" style="--w:42%"></span></li>
+            <li><span class="lbl" data-i18n="ch4.cond"></span><span class="bar" style="--w:64%"></span></li>
+          </ul>
+          <p class="chap-p" data-i18n="ch4.p"></p>
+        </div>
+      </article>
+
+      <article class="chapter" data-leg="leg.cruise">
+        <div class="chap-in">
+          <p class="eyebrow"><span class="rule"></span><span data-i18n="ch5.eyebrow"></span></p>
+          <h2 class="chap-h" data-i18n-html="ch5.title"></h2>
+          <ol class="programme" id="programme"></ol>
+        </div>
+      </article>
+
+      <article class="chapter chapter--landing" data-leg="leg.final" data-hold>
+        <div class="chap-in chap-in--wide">
+          <p class="eyebrow"><span class="rule"></span><span data-i18n="ch6.eyebrow"></span></p>
+          <h2 class="chap-h chap-h--xl" data-i18n-html="ch6.title"></h2>
+          <p class="date-line" data-i18n="date.long"></p>
+          <div class="details-grid">
+            <div>
+              <div class="countdown" role="timer" id="countdown">
+                <div class="unit"><span class="num" data-unit="d">000</span><span class="lbl" data-i18n="cd.days"></span></div>
+                <div class="unit"><span class="num" data-unit="h">00</span><span class="lbl" data-i18n="cd.hours"></span></div>
+                <div class="unit"><span class="num" data-unit="m">00</span><span class="lbl" data-i18n="cd.minutes"></span></div>
+                <div class="unit"><span class="num" data-unit="s">00</span><span class="lbl" data-i18n="cd.seconds"></span></div>
+              </div>
+              <p class="fine countdown-cap" id="countdown-cap"></p>
+            </div>
+            <dl class="manifest" id="manifest"></dl>
+            <div class="actions details-actions">
+              <button class="btn btn--solid" type="button" data-go="rsvp"><span data-i18n="cta.seat"></span> <span class="arrow" aria-hidden="true"></span></button>
+              <button class="btn btn--text" type="button" data-go="boarding"><span class="arrow arrow--back" aria-hidden="true"></span> <span data-i18n="nav.boarding"></span></button>
+            </div>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 5 · RSVP ============ -->
+  <section class="screen" id="rsvp" aria-labelledby="rsvp-h" hidden>
+    <div class="wrap narrow">
+      <div id="rsvp-form-wrap">
+        <p class="eyebrow rise" style="--i:0"><span class="rule"></span>RSVP · <span data-bind="displayName"></span></p>
+        <h2 class="title rise" style="--i:1" id="rsvp-h" tabindex="-1" data-focus data-i18n="rsvp.title"></h2>
+        <p class="sub rise" style="--i:2" id="rsvp-deadline" hidden></p>
+        <form id="rsvp-form" class="rise" style="--i:3" novalidate>
+          <fieldset class="choice field" id="attending-set" aria-describedby="attending-msg">
+            <legend data-i18n="rsvp.legend"></legend>
+            <div class="options">
+              <label class="option"><input type="radio" name="attending" id="attending-yes" value="yes"><span><b id="opt-yes"></b><small id="opt-yes-sub"></small></span></label>
+              <label class="option"><input type="radio" name="attending" id="attending-no" value="no"><span><b id="opt-no"></b><small id="opt-no-sub"></small></span></label>
+            </div>
+          </fieldset>
+          <p class="msg" id="attending-msg" aria-live="polite"></p>
+          <div class="if-yes" id="if-yes" hidden>
+            <div class="field" id="count-field">
+              <label for="party-count" data-i18n="rsvp.count"></label>
+              <select class="select" id="party-count" aria-describedby="count-hint"></select>
+              <p class="hint" id="count-hint"></p>
+            </div>
+            <div class="field">
+              <label for="dietary"><span data-i18n="rsvp.dietary"></span> <span class="opt" data-i18n="rsvp.optional"></span></label>
+              <textarea class="textarea" id="dietary" rows="2" maxlength="300" data-i18n-ph="rsvp.dietaryPh"></textarea>
+            </div>
+          </div>
+          <div class="field">
+            <label for="note"><span data-i18n="rsvp.message"></span> <span class="opt" data-i18n="rsvp.optional"></span></label>
+            <textarea class="textarea" id="note" rows="3" maxlength="500"></textarea>
+            <p class="counter hint" id="note-count" aria-live="off">0 / 500</p>
+          </div>
+          <p class="msg" id="rsvp-msg" role="alert"></p>
+          <div class="actions">
+            <button class="btn btn--solid" type="submit" id="rsvp-btn"><span id="rsvp-btn-label" data-i18n="rsvp.send"></span> <span class="arrow" aria-hidden="true"></span></button>
+            <button class="btn btn--text" type="button" data-go="details"><span class="arrow arrow--back" aria-hidden="true"></span> <span data-i18n="nav.details"></span></button>
+          </div>
+        </form>
+      </div>
+
+      <div class="done" id="rsvp-done" hidden>
+        <svg class="seal" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="30"/><path d="M21 33l7 7 15-16"/></svg>
+        <p class="eyebrow"><span class="rule"></span><span data-i18n="done.eyebrow"></span></p>
+        <h2 class="title" id="done-h" tabindex="-1" data-focus></h2>
+        <div class="notice" id="done-notice"></div>
+        <dl class="summary" id="done-summary"></dl>
+        <div class="actions">
+          <button class="btn" type="button" id="edit-rsvp" data-i18n="done.edit"></button>
+          <button class="btn btn--text" type="button" data-go="details"><span class="arrow arrow--back" aria-hidden="true"></span> <span data-i18n="nav.details"></span></button>
+        </div>
+      </div>
+    </div>
+  </section>
+  </main>
+</div>
+
+<div class="dialog" id="save-dialog" role="dialog" aria-modal="true" aria-labelledby="save-h" hidden>
+  <div class="dialog-card">
+    <h3 id="save-h" tabindex="-1" data-i18n="save.title"></h3>
+    <p id="save-hint" data-i18n="save.hint"></p>
+    <img id="save-img" alt="">
+    <div class="actions"><button class="btn" type="button" id="save-close" data-i18n="save.close"></button></div>
+  </div>
+</div>
+

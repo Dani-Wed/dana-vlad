@@ -1,6 +1,7 @@
 // Builds the deployable site into docs/ (GitHub Pages serves this folder).
-//   node build.mjs                       → prototype mode (sample invitations, RSVPs not sent)
-//   node build.mjs https://script.google.com/macros/s/…/exec   → live mode
+//   node build.mjs                                            → prototype mode (sample invitations, RSVPs not sent)
+//   node build.mjs https://script.google.com/macros/s/…/exec  → live mode
+// Source: src/head.html (styles) + src/body.html (markup) + src/i18n.js (translations) + src/app.js (logic)
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { webcrypto as crypto } from "node:crypto";
 
@@ -11,14 +12,21 @@ if (ENDPOINT && !/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test
 }
 
 const SALT = "dv0409-after-takeoff";
-const normalize = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase()
-  .replace(/[^a-z\s'-]/g, " ").replace(/[\s'-]+/g, " ").trim();
+// Must match normalize() in src/app.js and apps-script/Code.gs
+const CYR = { а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"io",ж:"j",з:"z",и:"i",й:"i",к:"c",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"h",ц:"t",ч:"c",ш:"s",щ:"sc",ъ:"",ы:"i",ь:"",э:"e",ю:"iu",я:"ia",і:"i",ї:"i",є:"e",ґ:"g" };
+function normalize(s){
+  let x = String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  x = x.replace(/[а-яёіїєґ]/g, c => CYR[c] ?? "");
+  x = x.replace(/[^a-z\s'-]/g, " ").replace(/[\s'-]+/g, " ").trim();
+  return x.split(" ").map(w => w.replace(/ph/g, "f").replace(/ch/g, "c").replace(/sh/g, "s").replace(/zh/g, "j").replace(/kh/g, "h")
+    .replace(/gh/g, "g").replace(/[kq]/g, "c").replace(/w/g, "v").replace(/y/g, "i").replace(/x/g, "cs")
+    .replace(/([cg])i(?=[aou])/g, "$1").replace(/(.)\1+/g, "$1")).join(" ");
+}
 const enc = new TextEncoder();
 const sha = t => crypto.subtle.digest("SHA-256", enc.encode(t));
 const hex = b => Buffer.from(b).toString("hex");
 const b64 = b => Buffer.from(b).toString("base64");
 
-// Sample invitations are only embedded in prototype mode.
 const records = [];
 if (!ENDPOINT) {
   const { invitations } = JSON.parse(await readFile(new URL("./data/mock-invitations.json", import.meta.url)));
@@ -35,29 +43,30 @@ if (!ENDPOINT) {
   records.sort(() => Math.random() - .5);
 }
 
-let body = await readFile(new URL("./src/template.html", import.meta.url), "utf8");
-body = body.replace("/*__INVITATIONS__*/[]", JSON.stringify(records))
-           .replace("/*__SALT__*/", SALT)
-           .replace("/*__ENDPOINT__*/", ENDPOINT);
+const read = f => readFile(new URL(`./src/${f}`, import.meta.url), "utf8");
+const [head, body, i18n, app] = await Promise.all(["head.html", "body.html", "i18n.js", "app.js"].map(read));
+const appBuilt = app.replace("/*__INVITATIONS__*/[]", JSON.stringify(records)).replace("/*__SALT__*/", SALT).replace("/*__ENDPOINT__*/", ENDPOINT);
 
-// The template is written as page content; wrap it in a full document for static hosting.
-const cut = body.indexOf("</style>") + "</style>".length;
-const head = body.slice(0, cut), rest = body.slice(cut);
 const html = `<!doctype html>
-<html lang="en">
+<html lang="ro">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#080A0F">
 <meta name="robots" content="noindex, nofollow">
 <meta property="og:title" content="After Takeoff · Dana & Vlad">
-<meta property="og:description" content="A private journey · 04 September 2027 · Madison Park">
+<meta property="og:description" content="O călătorie privată · 04 septembrie 2027 · Madison Park">
 <meta property="og:type" content="website">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 ${head}
 </head>
 <body>
-${rest}
+${body}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+${i18n}
+${appBuilt}
+</script>
 </body>
 </html>
 `;
