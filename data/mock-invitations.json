@@ -1,0 +1,29 @@
+{
+  "_note": "PROTOTYPE SAMPLE DATA. Fictional households for testing only. This file is never shipped to the browser: build.mjs encrypts each invitation with a key derived from the guest's name, so the page cannot list guests. Replace with the real guest list or a backend (see README.md).",
+  "invitations": [
+    {
+      "code": "AT7K2Q",
+      "displayName": "Elena & Andrei Popescu",
+      "shortName": "Elena & Andrei",
+      "greeting": "Elena & Andrei",
+      "partySize": 2,
+      "lookupNames": ["Elena Popescu", "Andrei Popescu"]
+    },
+    {
+      "code": "AT3M9C",
+      "displayName": "The Ceban Family",
+      "shortName": "Familia Ceban",
+      "greeting": "Ion & Natalia",
+      "partySize": 4,
+      "lookupNames": ["Ion Ceban", "Natalia Ceban"]
+    },
+    {
+      "code": "AT5R1V",
+      "displayName": "Maria Rusu",
+      "shortName": "Maria Rusu",
+      "greeting": "Maria",
+      "partySize": 1,
+      "lookupNames": ["Maria Rusu"]
+    }
+  ]
+}
