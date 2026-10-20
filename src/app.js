@@ -447,7 +447,7 @@ function renderProgramme(){
   });
 }
 
-onEnter.details = () => { tick(); clearInterval(cdTimer); cdTimer = setInterval(tick, 1000); Flight.start(); };
+onEnter.details = () => { tick(); clearInterval(cdTimer); cdTimer = setInterval(tick, 1000); Flight.start(); Sound.flight(true); };
 onLeave.details = () => { clearInterval(cdTimer); Flight.stop(); };
 
 /* =====================================================================
@@ -485,11 +485,24 @@ const Flight = (() => {
   function initGL(){
     if (!window.THREE) return null;
     let renderer;
-    try { renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: !isSmall, powerPreference: "high-performance" }); }
+    try { renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: !isSmall, powerPreference: "high-performance" }); }
     catch { return null; }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, isSmall ? 1.5 : 2));
-    renderer.setClearColor(0x000000, 0);
+    renderer.setClearColor(0x080a0f, 1);
     const scene = new THREE.Scene();
+    // the sky is painted inside WebGL (opaque canvas) — a full-screen gradient with dithering against banding
+    const skyMat = new THREE.ShaderMaterial({
+      uniforms: { cTop: { value: new THREE.Color() }, cMid: { value: new THREE.Color() }, cHor: { value: new THREE.Color() } },
+      vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.999, 1.0); }",
+      fragmentShader: "precision highp float; varying vec2 vUv; uniform vec3 cTop; uniform vec3 cMid; uniform vec3 cHor;" +
+        "float rnd(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }" +
+        "void main(){ float y = vUv.y; vec3 c = y > 0.45 ? mix(cMid, cTop, smoothstep(0.45, 1.0, y)) : mix(cHor, cMid, smoothstep(0.0, 0.45, y));" +
+        " c += (rnd(gl_FragCoord.xy) - 0.5) / 255.0; gl_FragColor = vec4(c, 1.0); }",
+      depthWrite: false, depthTest: false
+    });
+    const sky = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), skyMat);
+    sky.frustumCulled = false; sky.renderOrder = -1;
+    scene.add(sky);
     scene.fog = new THREE.Fog(0x1a2740, 40, isSmall ? 520 : 680);
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 3000);
 
@@ -552,7 +565,7 @@ const Flight = (() => {
     const amb = new THREE.AmbientLight(0x8a9bb6, .55); scene.add(amb);
     const key = new THREE.DirectionalLight(0xdfe6f2, .9); key.position.set(-30, 60, 40); scene.add(key);
     const rim = new THREE.DirectionalLight(0xffd6b0, 0); rim.position.set(20, 10, -80); scene.add(rim);
-    return { renderer, scene, camera, cloudMat, starMat, plane, amb, key, rim };
+    return { renderer, scene, camera, cloudMat, starMat, skyMat, plane, amb, key, rim };
   }
 
   function resize(){
@@ -600,6 +613,9 @@ const Flight = (() => {
 
       const dawn = smooth(.7, 1, p), night = 1 - smooth(.15, .6, p);
       gl.scene.fog.color.setRGB(hor[0] / 255, hor[1] / 255, hor[2] / 255);
+      gl.skyMat.uniforms.cTop.value.setRGB(top[0] / 255, top[1] / 255, top[2] / 255);
+      gl.skyMat.uniforms.cMid.value.setRGB(mid[0] / 255, mid[1] / 255, mid[2] / 255);
+      gl.skyMat.uniforms.cHor.value.setRGB(hor[0] / 255, hor[1] / 255, hor[2] / 255);
       gl.cloudMat.color.setRGB(lerp(.42, .84, dawn) * lerp(1, .85, night), lerp(.48, .72, dawn), lerp(.6, .74, dawn));
       gl.cloudMat.opacity = lerp(.7, .8, dawn);
       gl.starMat.opacity = .85 * night * smooth(.1, .22, p);
@@ -649,39 +665,86 @@ const Flight = (() => {
       running = false; cancelAnimationFrame(raf);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", resize);
-      Sound.off();
+      Sound.flight(false);
     },
     relabel(){ if (legShown) $("#hud-leg").textContent = t(legShown); }
   };
 })();
 
-/* ---------- cabin sound: synthesised air noise, off until turned on ---------- */
+/* ---------- sound: generative ambient pad + cabin air in flight ----------
+   On by default. Browsers only allow audio after the guest's first tap, so it
+   starts with the first interaction (usually "Begin your journey"). Mute is remembered. */
 const Sound = (() => {
-  let ctx = null, gain = null, filter = null, on = false;
-  const sbtn = $("#sound-btn");
-  function build(){
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const len = ctx.sampleRate * 4, buf = ctx.createBuffer(2, len, ctx.sampleRate);
-    for (let ch = 0; ch < 2; ch++) { const d = buf.getChannelData(ch); let last = 0; for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; last = (last + .02 * w) / 1.02; d[i] = last * 3.2; } }
-    const src = ctx.createBufferSource(); src.buffer = buf; src.loop = true;
-    filter = ctx.createBiquadFilter(); filter.type = "lowpass"; filter.frequency.value = 420;
-    gain = ctx.createGain(); gain.gain.value = 0;
-    src.connect(filter).connect(gain).connect(ctx.destination); src.start();
+  let ctx = null, master = null, air = null, airF = null, padBus = null, started = false, inFlight = false;
+  let on = store.get("dv0409-sound") !== false;
+  const btns = $$("[data-sound-btn]");
+  const midi = m => 440 * Math.pow(2, (m - 69) / 12);
+  // Dmaj9 → Bm11 → Gmaj9 → A6/9: slow, open voicings
+  const CHORDS = [[50, 57, 62, 66, 69, 76], [47, 54, 62, 66, 69, 73], [43, 50, 59, 62, 66, 69], [45, 52, 57, 61, 66, 71]];
+  function impulse(){
+    const len = ctx.sampleRate * 3.5, buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6); }
+    return buf;
   }
-  function label(){ sbtn.setAttribute("aria-label", t(on ? "hud.soundOn" : "hud.soundOff")); }
-  function set(v){
-    on = v; sbtn.setAttribute("aria-pressed", String(on)); label();
+  function chord(k){
     if (!ctx) return;
-    gain.gain.cancelScheduledValues(ctx.currentTime);
-    gain.gain.setTargetAtTime(on ? .22 : 0, ctx.currentTime, .4);
+    const now = ctx.currentTime;
+    CHORDS[k % CHORDS.length].forEach((m, j) => [-5, 5].forEach(det => {
+      const o = ctx.createOscillator(); o.type = j < 2 ? "sine" : "triangle";
+      o.frequency.value = midi(m); o.detune.value = det;
+      const g = ctx.createGain(), peak = j < 2 ? .05 : .026;
+      g.gain.setValueAtTime(0, now); g.gain.linearRampToValueAtTime(peak, now + 3);
+      g.gain.setValueAtTime(peak, now + 7); g.gain.linearRampToValueAtTime(0, now + 11.5);
+      o.connect(g).connect(padBus); o.start(now); o.stop(now + 12);
+    }));
   }
-  sbtn.addEventListener("click", () => {
-    try { if (!ctx) build(); if (ctx.state === "suspended") ctx.resume(); set(!on); } catch { sbtn.hidden = true; }
+  function build(){
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch {}
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
+    // cabin air (brown noise), only during the flight
+    const len = ctx.sampleRate * 4, nb = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = nb.getChannelData(ch); let last = 0; for (let i = 0; i < len; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 3.2; } }
+    const src = ctx.createBufferSource(); src.buffer = nb; src.loop = true;
+    airF = ctx.createBiquadFilter(); airF.type = "lowpass"; airF.frequency.value = 380;
+    air = ctx.createGain(); air.gain.value = 0;
+    src.connect(airF).connect(air).connect(master); src.start();
+    // pad through a gentle filter sweep and a long reverb
+    const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1150; lp.Q.value = .4;
+    const lfo = ctx.createOscillator(), lfoG = ctx.createGain(); lfo.frequency.value = .05; lfoG.gain.value = 450;
+    lfo.connect(lfoG).connect(lp.frequency); lfo.start();
+    const verb = ctx.createConvolver(); verb.buffer = impulse();
+    const dry = ctx.createGain(), wet = ctx.createGain(); dry.gain.value = .35; wet.gain.value = .7;
+    padBus = ctx.createGain();
+    padBus.connect(lp); lp.connect(dry).connect(master); lp.connect(verb).connect(wet).connect(master);
+    let k = 0; chord(k++); setInterval(() => { if (ctx.state === "running") chord(k++); }, 8000);
+  }
+  function apply(){
+    btns.forEach(b => { b.setAttribute("aria-pressed", String(on)); b.setAttribute("aria-label", t(on ? "hud.soundOn" : "hud.soundOff")); });
+    if (!ctx) return;
+    const now = ctx.currentTime;
+    master.gain.cancelScheduledValues(now); master.gain.setTargetAtTime(on ? .55 : 0, now, .6);
+    air.gain.cancelScheduledValues(now); air.gain.setTargetAtTime(inFlight ? .3 : 0, now, 1);
+  }
+  function ensure(){
+    if (!started) { started = true; try { build(); } catch { started = false; btns.forEach(b => { b.hidden = true; }); return; } }
+    if (ctx.state !== "running") ctx.resume();
+  }
+  function unlock(){ if (on) { ensure(); apply(); } }
+  ["pointerdown", "touchend", "click", "keydown"].forEach(ev => document.addEventListener(ev, unlock, { capture: true, passive: true }));
+  btns.forEach(b => b.addEventListener("click", () => {
+    on = !on; store.set("dv0409-sound", on);
+    if (on) ensure();
+    apply();
+  }));
+  document.addEventListener("visibilitychange", () => {
+    if (!ctx) return;
+    if (document.hidden) ctx.suspend(); else if (on) ctx.resume();
   });
   return {
-    update(p, v){ if (!ctx || !on) return; filter.frequency.setTargetAtTime(260 + 380 * Math.min(1, p * 4) + Math.min(900, Math.abs(v) * 4000), ctx.currentTime, .3); },
-    off(){ if (on) set(false); },
-    label
+    update(p, v){ if (!ctx || !on || !inFlight) return; airF.frequency.setTargetAtTime(260 + 380 * Math.min(1, p * 4) + Math.min(900, Math.abs(v) * 4000), ctx.currentTime, .3); },
+    flight(b){ inFlight = b; apply(); },
+    label: apply
   };
 })();
 
