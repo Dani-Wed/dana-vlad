@@ -48,7 +48,7 @@ function fillMissingCodes() {
 }
 
 /** Writes each household's personal invitation link into column G. Set SITE_URL first. */
-const SITE_URL = "https://YOUR-USERNAME.github.io/dana-vlad/";
+const SITE_URL = "https://dani-wed.github.io/dana-vlad/";
 function writeInviteLinks() {
   const sh = SpreadsheetApp.getActive().getSheetByName(INV);
   sh.getRange(1, 7).setValue("Personal link");
